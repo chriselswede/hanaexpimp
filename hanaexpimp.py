@@ -353,6 +353,7 @@ def main():
         tot_nbr_exported_rows = 0
         for view_number in range(int(start_view_number), int(number_views)+1):
             tot_nbr_exported_rows += export_view(view_number, view_schema, view_name, view_path, number_views, sleep_time, sqlman, logman)
+        log("Total number of exported rows from all views is "+str(tot_nbr_exported_rows), logman)
     else:
         for view_number in range(int(start_view_number), int(number_views)+1):
             import_view(view_number, view_name, view_path, table_schema, table_name, number_views, sleep_time, sqlman, logman)    
