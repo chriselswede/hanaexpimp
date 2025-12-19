@@ -18,7 +18,7 @@ def printHelp():
     print("INPUT ARGUMENTS:                                                                                                                   ")
     print("         ----  USER KEY  ----                                                                                                      ")     
     print(" -k      DB user key, this one has to be maintained in hdbuserstore, i.e. as <sid>adm do                                           ")               
-    print("         > hdbuserstore SET <DB USER KEY> <ENV> <USERNAME> <PASSWORD>                     , default: SYSTEMKEY                     ")
+    print("         > hdbuserstore SET <DB USER KEY> <ENV> <USERNAME> <PASSWORD>                     , default: '' (must be defined)                     ")
     print("         ---- OUTPUT  ----                                                                                                         ")
     print(" -os     output sql [true/false], prints all crucial tasks, default: false                                                         ")
     print(" -op     output path, full literal path of the folder for the output logs (will be created if not there), default = '' (not used)  ")
@@ -26,9 +26,9 @@ def printHelp():
     print(" -es     execute sql [true/false], execute all crucial tasks (useful to turn off for investigation with -os=true,                  ")
     print("         a.k.a. chicken mode :)  default: true                                                                                     ")
     print("         ---- SLEEP  ----                                                                                                          ")
-    print(" -st     sleep time [s], time to sleep, in seconds, between each export,                                                           ")
+    print(" -st     sleep time [s], time to sleep, in seconds, between each export and each import, default: 60                                                          ")
     print("         ---- TABLE and VIEWS  ----                                                                                                ")
-    print(" -ts     table schema, the schema where the table is located, default: SAPHANADB                                                   ")
+    print(" -ts     table schema, the schema where the table is located, default: '' (must be defined)                                                   ")
     print(" -tn     table name, the name of the table to be imported back into, default: ""  (must be provided)                               ")
     print(" -vs     view schema, the schema where the views to be exported are located, default: ""   (must be provided)                      ")
     print(" -vn     view name, the first part of the name of views to be exported,                                                            ")
@@ -185,13 +185,17 @@ def import_view(view_number, view_name, view_path, table_schema, table_name, num
     log("Will now import all data from "+view_name+"_"+str(view_number)+" into \""+table_schema+"\".\""+table_name+"\"", logman)
     errorlog = "ERROR: Could not import data from"+view_name+"_"+str(view_number)+" into \""+table_schema+"\".\""+table_name+"\""
     try_execute_sql(sql_for_import, errorlog, sqlman, logman) 
-    sql_to_count = "SELECT COUNT(*) FROM \""+table_schema+"\".\""+table_name+"\""
-    [count_out, succeeded] = try_execute_sql(sql_to_count, errorlog, sqlman, logman, True, True)
-    count_out = count_out.strip("\n").strip("|").strip(" ")
+    count_out = number_of_rows_in_table(table_schema, table_name, sqlman, logman)
     log("Number of rows in \""+table_schema+"\".\""+table_name+"\" is now "+count_out, logman)
     if int(view_number) < int(number_views):
         log("Will now sleep for "+sleep_time+" seconds before importing data from "+view_name+"_"+str(view_number+1), logman)
     time.sleep(int(sleep_time))
+
+def number_of_rows_in_table(table_schema, table_name, sqlman, logman):
+    sql_to_count = "SELECT COUNT(*) FROM \""+table_schema+"\".\""+table_name+"\""
+    [count_out, succeeded] = try_execute_sql(sql_to_count, "", sqlman, logman, True, True)
+    count_out = count_out.strip("\n").strip("|").strip(" ")
+    return int(count_out)
 
 def get_sid():
     SID = run_command('echo $SAPSYSTEMNAME').upper()
@@ -219,12 +223,12 @@ def checkIfAcceptedFlag(word):
 def main():
  
     #####################   DEFAULTS   ####################
-    dbuserkeys = "SYSTEMKEY"   # The KEY must be maintained in hdbuserstore  
+    dbuserkeys = ""   # The KEY must be maintained in hdbuserstore  
     out_sql = 'false'
     out_path = ""
     execute_sql = 'true'
     sleep_time = '60'   # in seconds
-    table_schema = "SAPHANADB"
+    table_schema = ""
     table_name = ""
     view_schema = ""
     view_name = ""
@@ -355,6 +359,8 @@ def main():
             tot_nbr_exported_rows += export_view(view_number, view_schema, view_name, view_path, number_views, sleep_time, sqlman, logman)
         log("Total number of exported rows from all views is "+str(tot_nbr_exported_rows), logman)
     else:
+        count_out = number_of_rows_in_table(table_schema, table_name, sqlman, logman)
+        log("Number of rows in \""+table_schema+"\".\""+table_name+"\" before the import is "+count_out, logman)
         for view_number in range(int(start_view_number), int(number_views)+1):
             import_view(view_number, view_name, view_path, table_schema, table_name, number_views, sleep_time, sqlman, logman)    
 
