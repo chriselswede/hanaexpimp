@@ -44,6 +44,11 @@ def printHelp():
     print(" Before below example, following views were created:                                                                               ")
     print("  CREATE VIEW VIEWMASS_1 AS SELECT * FROM PLAYGROUND.MASS_DATA_PART_DEMO where COL1 < 20171214;                                    ")
     print("  CREATE VIEW VIEWMASS_2 AS SELECT * FROM PLAYGROUND.MASS_DATA_PART_DEMO where COL1 >= 20171214;                                   ")
+    print("  SELECT SUM(row_count) AS total_row_count FROM (  --check that in total the views have the same number of rows as the table       ")
+    print("  SELECT COUNT(*) AS row_count FROM SYSTEM.VIEWMASS_1                                                                              ")
+    print("  UNION ALL                                                                                                                        ")
+    print("  SELECT COUNT(*) AS row_count FROM SYSTEM.VIEWMASS_2                                                                              ") 
+    print("  ) AS counts;                                                                                                                     ")
     print(" This shows an example of a 'chicken mode' of checking the statements of exporting 1 out of 2 views without executing them         ")
     print("  python hanaexpimp.py -k SYSTEMKEYT1 -ts PLAYGROUND -tn MASS_DATA_PART_DEMO -vs SYSTEM -vn VIEWMASS -vp /usr/sap/CHP/HDB00/work/  ")
     print("  -nv 2 -sv 2 -exp true -st 1 -es false -os true                                                                                   ")
@@ -115,7 +120,7 @@ def try_execute_sql(sql, errorlog, sqlman, logman, exit_on_fail = True, always_e
         errorMessage = "ERROR: Could not execute\n\t"+sql+"\nERROR MESSAGE:\n"+e.stderr+"\n"+errorlog
         succeeded = False
         if exit_on_fail:
-            log(errorMessage, logman, True)
+            log(errorMessage, logman)
             os._exit(1)
         else:
             log(errorMessage, logman)
@@ -135,7 +140,7 @@ def checkAndConvertBooleanFlag(boolean, flagstring, logman = ''):
     boolean = boolean.lower()
     if boolean not in ("false", "true"):
         if logman:
-            log("INPUT ERROR: "+flagstring+" must be either 'true' or 'false'. Please see --help for more information.", logman, True)
+            log("INPUT ERROR: "+flagstring+" must be either 'true' or 'false'. Please see --help for more information.", logman)
         else:
             print("INPUT ERROR: "+flagstring+" must be either 'true' or 'false'. Please see --help for more information.")
         os._exit(1)
@@ -173,6 +178,7 @@ def export_view(view_number, view_schema, view_name, view_path, number_views, sl
     if int(view_number) < int(number_views):
         log("Will now sleep for "+sleep_time+" seconds before exporting "+view_name+"_"+str(view_number+1), logman)
     time.sleep(int(sleep_time))
+    return nbrRows
 
 def import_view(view_number, view_name, view_path, table_schema, table_name, number_views, sleep_time, sqlman, logman):
     sql_for_import = "IMPORT FROM CSV FILE '"+view_path+"exported_"+view_name+"_"+str(view_number)+".csv' INTO \""+table_schema+"\".\""+table_name+"\""
@@ -344,8 +350,9 @@ def main():
 
     ################ START #################
     if export_flag:
+        tot_nbr_exported_rows = 0
         for view_number in range(int(start_view_number), int(number_views)+1):
-            export_view(view_number, view_schema, view_name, view_path, number_views, sleep_time, sqlman, logman)
+            tot_nbr_exported_rows += export_view(view_number, view_schema, view_name, view_path, number_views, sleep_time, sqlman, logman)
     else:
         for view_number in range(int(start_view_number), int(number_views)+1):
             import_view(view_number, view_name, view_path, table_schema, table_name, number_views, sleep_time, sqlman, logman)    
