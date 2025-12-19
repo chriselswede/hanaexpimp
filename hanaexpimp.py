@@ -178,7 +178,7 @@ def export_view(view_number, view_schema, view_name, view_path, number_views, sl
     if int(view_number) < int(number_views):
         log("Will now sleep for "+sleep_time+" seconds before exporting "+view_name+"_"+str(view_number+1), logman)
     time.sleep(int(sleep_time))
-    return nbrRows
+    return int(nbrRows)
 
 def import_view(view_number, view_name, view_path, table_schema, table_name, number_views, sleep_time, sqlman, logman):
     sql_for_import = "IMPORT FROM CSV FILE '"+view_path+"exported_"+view_name+"_"+str(view_number)+".csv' INTO \""+table_schema+"\".\""+table_name+"\""
