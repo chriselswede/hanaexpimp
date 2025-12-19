@@ -37,7 +37,7 @@ def printHelp():
     print(" -nv     number of views, the number of views to be exported, default: 10                                                          ")
     print(" -sv     start view number, the number of the first view to be exported, default: 1                                                ")
     print("         ---- EXPORT/IMPORT  ----                                                                                                  ")
-    print(" -exp    export [true/false], true --> export, false --> import, default: export                                                   ")
+    print(" -exp    export [true/false], true --> export, false --> import, default: true                                                   ")
     print("                                                                                                                                   ")
     print("                                                                                                                                   ")
     print("EXAMPLES:                                                                                                                          ")
@@ -181,18 +181,18 @@ def export_view(view_number, view_schema, view_name, view_path, number_views, sl
     return int(nbrRows)
 
 def import_view(view_number, view_name, view_path, table_schema, table_name, number_views, sleep_time, sqlman, logman):
-    sql_for_import = "IMPORT FROM CSV FILE '"+view_path+"exported_"+view_name+"_"+str(view_number)+".csv' INTO \""+table_schema+"\".\""+table_name+"\""
-    log("Will now import all data from "+view_name+"_"+str(view_number)+" into \""+table_schema+"\".\""+table_name+"\"", logman)
-    errorlog = "ERROR: Could not import data from"+view_name+"_"+str(view_number)+" into \""+table_schema+"\".\""+table_name+"\""
+    sql_for_import = "IMPORT FROM CSV FILE '"+view_path+"exported_"+view_name+"_"+str(view_number)+".csv' INTO \\\""+table_schema+"\\\".\\\""+table_name+"\\\""
+    log("Will now import all data from "+view_name+"_"+str(view_number)+" into \\\""+table_schema+"\\\".\\\""+table_name+"\\\"", logman)
+    errorlog = "ERROR: Could not import data from"+view_name+"_"+str(view_number)+" into \\\""+table_schema+"\\\".\\\""+table_name+"\\\""
     try_execute_sql(sql_for_import, errorlog, sqlman, logman) 
     count_out = number_of_rows_in_table(table_schema, table_name, sqlman, logman)
-    log("Number of rows in \""+table_schema+"\".\""+table_name+"\" is now "+count_out, logman)
+    log("Number of rows in  \\\""+table_schema+"\\\".\\\""+table_name+"\\\" is now "+count_out, logman)
     if int(view_number) < int(number_views):
         log("Will now sleep for "+sleep_time+" seconds before importing data from "+view_name+"_"+str(view_number+1), logman)
     time.sleep(int(sleep_time))
 
 def number_of_rows_in_table(table_schema, table_name, sqlman, logman):
-    sql_to_count = "SELECT COUNT(*) FROM \""+table_schema+"\".\""+table_name+"\""
+    sql_to_count = "SELECT COUNT(*) FROM \\\""+table_schema+"\\\".\\\""+table_name+"\\\""
     [count_out, succeeded] = try_execute_sql(sql_to_count, "", sqlman, logman, True, True)
     count_out = count_out.strip("\n").strip("|").strip(" ")
     return int(count_out)
@@ -360,7 +360,7 @@ def main():
         log("Total number of exported rows from all views is "+str(tot_nbr_exported_rows), logman)
     else:
         count_out = number_of_rows_in_table(table_schema, table_name, sqlman, logman)
-        log("Number of rows in \""+table_schema+"\".\""+table_name+"\" before the import is "+count_out, logman)
+        log("Number of rows in \\\""+table_schema+"\\\".\\\""+table_name+"\\\" before the import is "+count_out, logman)
         for view_number in range(int(start_view_number), int(number_views)+1):
             import_view(view_number, view_name, view_path, table_schema, table_name, number_views, sleep_time, sqlman, logman)    
 
