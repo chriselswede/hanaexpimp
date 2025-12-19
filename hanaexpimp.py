@@ -186,7 +186,7 @@ def import_view(view_number, view_name, view_path, table_schema, table_name, num
     errorlog = "ERROR: Could not import data from"+view_name+"_"+str(view_number)+" into \\\""+table_schema+"\\\".\\\""+table_name+"\\\""
     try_execute_sql(sql_for_import, errorlog, sqlman, logman) 
     count_out = number_of_rows_in_table(table_schema, table_name, sqlman, logman)
-    log("Number of rows in  \\\""+table_schema+"\\\".\\\""+table_name+"\\\" is now "+count_out, logman)
+    log("Number of rows in  \\\""+table_schema+"\\\".\\\""+table_name+"\\\" is now "+str(count_out), logman)
     if int(view_number) < int(number_views):
         log("Will now sleep for "+sleep_time+" seconds before importing data from "+view_name+"_"+str(view_number+1), logman)
     time.sleep(int(sleep_time))
@@ -360,7 +360,7 @@ def main():
         log("Total number of exported rows from all views is "+str(tot_nbr_exported_rows), logman)
     else:
         count_out = number_of_rows_in_table(table_schema, table_name, sqlman, logman)
-        log("Number of rows in \\\""+table_schema+"\\\".\\\""+table_name+"\\\" before the import is "+count_out, logman)
+        log("Number of rows in \\\""+table_schema+"\\\".\\\""+table_name+"\\\" before the import is "+str(count_out), logman)
         for view_number in range(int(start_view_number), int(number_views)+1):
             import_view(view_number, view_name, view_path, table_schema, table_name, number_views, sleep_time, sqlman, logman)    
 
